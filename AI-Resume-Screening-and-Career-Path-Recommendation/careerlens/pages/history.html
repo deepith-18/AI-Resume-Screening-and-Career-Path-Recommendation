@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>History — CareerLens</title>
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <link rel="stylesheet" href="../css/pages.css"/>
+  <link rel="stylesheet" href="../css/history.css"/> 
+  <script src="../js/shared.js"></script>
+</head>
+<body>
+<div id="navbarPlaceholder"></div>
+<div class="page-container page-fade">
+  <div class="page-header">
+    <div class="page-eyebrow">Records</div>
+    <h1 class="page-title">Resume <em>History</em></h1>
+    <p class="page-sub">Access your previously analyzed resumes and career roadmaps.</p>
+  </div>
+  <div class="page-nav-row">
+    <button class="history-btn" onclick="clearAll()">
+       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+       Clear All History
+    </button>
+  </div>
+  <div id="historyContainer" class="history-list"></div>
+</div>
+
+<script type="module">
+  import { auth } from "../js/firebase-config.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+
+  let historyItems = [];
+
+  // Helper to get the current user's specific storage key
+  const getHistoryKey = () => auth.currentUser ? `cl_history_${auth.currentUser.uid}` : null;
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      initNavbar('history', user);
+      const logBtn = document.getElementById('logoutBtn');
+      if (logBtn) logBtn.onclick = () => Auth.logout(auth);
+      
+      // Load history ONLY after we are sure the user is logged in
+      loadHistory();
+    } else { 
+      window.location.href = 'login.html'; 
+    }
+  });
+
+  function loadHistory() {
+    const key = getHistoryKey();
+    if (!key) return;
+
+    const rawHistory = JSON.parse(localStorage.getItem(key) || '[]');
+    historyItems = [...rawHistory].reverse(); 
+    
+    const container = document.getElementById("historyContainer");
+    container.innerHTML = "";
+
+    if (historyItems.length === 0) {
+      container.innerHTML = `<div class="empty-gate"><div class="empty-icon-lg">📂</div><h2>No History</h2><a href="analyze.html" class="btn btn-accent">Analyze Now</a></div>`;
+      return;
+    }
+
+    historyItems.forEach((item, index) => {
+      const skillsHtml = item.data.extracted_skills?.slice(0, 5).map(s => `<span class="badge">${s.name}</span>`).join("") || "";
+      const card = document.createElement("div");
+      card.className = "history-card";
+      card.innerHTML = `
+        <div class="history-header-row">
+          <div class="history-name">${item.data.name || "Candidate"}</div>
+          <div class="history-meta-right">
+            <div class="history-date">${item.date}</div>
+            <button class="delete-single-btn" onclick="deleteRecord(${index})" title="Delete">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div class="history-score-tag">Match Score: ${item.data.overall_score || 0}%</div>
+        <div class="history-skills">${skillsHtml}</div>
+        <div class="history-actions"><button class="history-btn view-btn" onclick="viewResult(${index})">View Analysis</button></div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  window.deleteRecord = function(index) {
+    if (confirm("Delete this specific record?")) {
+      const key = getHistoryKey();
+      const raw = JSON.parse(localStorage.getItem(key) || '[]');
+      const targetIndex = (raw.length - 1) - index;
+      raw.splice(targetIndex, 1);
+      
+      localStorage.setItem(key, JSON.stringify(raw));
+      loadHistory();
+      showToast("Record deleted", "default");
+    }
+  };
+
+  window.viewResult = function(index) {
+    const selectedRecord = historyItems[index].data;
+    AnalysisStore.save(selectedRecord);
+    localStorage.removeItem('cl_selected_role');
+    window.location.href = "skills.html";
+  };
+
+  window.clearAll = function() {
+    if (confirm("Clear all history permanently?")) {
+      const key = getHistoryKey();
+      localStorage.removeItem(key);
+      loadHistory();
+      showToast("All records cleared", "default");
+    }
+  };
+</script>
+
+<style>
+/* CSS to prevent overlapping */
+.history-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.history-name { font-weight: 700; font-size: 1.1rem; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 15px; }
+.history-meta-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.history-date { font-size: 0.72rem; color: #888; white-space: nowrap; }
+
+.delete-single-btn { background: #fff; border: 1px solid #fee2e2; border-radius: 4px; padding: 4px; cursor: pointer; transition: 0.2s; display: flex; }
+.delete-single-btn:hover { background: #fee2e2; transform: scale(1.1); }
+
+.history-score-tag { display: inline-block; background: #fff5f2; color: #c8502a; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; }
+.history-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #f0f0f0; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+</style>
+</body>
+</html>

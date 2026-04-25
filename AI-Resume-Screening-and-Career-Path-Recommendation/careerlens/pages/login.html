@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — CareerLens</title>
+
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <link rel="stylesheet" href="../css/auth.css"/>
+
+  <script type="module" src="../js/auth.js"></script>
+</head>
+
+<body class="auth-page">
+  <div class="auth-wrap">
+
+    <!-- LEFT PANEL -->
+    <div class="auth-left">
+      <a class="auth-logo" href="../index.html">
+        <div class="nav-brand-dot"></div>CareerLens
+      </a>
+
+      <div class="auth-left-body">
+        <h1 class="auth-left-title">
+          Unlock your<br/><em>career path.</em>
+        </h1>
+
+        <p class="auth-left-sub">
+          Sign in to access your personalized resume analysis, skill reports, and learning roadmap.
+        </p>
+
+        <div class="auth-testimonials">
+          <div class="testimonial">
+            <p class="t-quote">
+              "CareerLens helped me identify I was only 2 skills away from a Senior Engineer role. Landed the job in 6 weeks."
+            </p>
+            <div class="t-author">
+              <div class="t-avatar">A</div>
+              <div>
+                <div class="t-name">Aditya K.</div>
+                <div class="t-role">Software Engineer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="auth-right">
+      <div class="auth-form-wrap page-fade">
+
+        <div class="auth-form-header">
+          <h2 class="auth-form-title">Welcome back</h2>
+          <p class="auth-form-sub">
+            Don't have an account?
+            <a href="register.html" class="auth-link">Sign up free</a>
+          </p>
+        </div>
+
+        <!-- EMAIL -->
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input class="form-input" id="email" type="email" placeholder="you@example.com"/>
+        </div>
+
+        <!-- PASSWORD -->
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-pw-wrap">
+            <input class="form-input" id="password" type="password" placeholder="••••••••"/>
+            <button class="pw-toggle" type="button" onclick="togglePw('password', this)">
+              👁
+            </button>
+          </div>
+        </div>
+
+        <!-- ✅ FORGOT PASSWORD -->
+  
+
+        <!-- LOGIN BUTTON -->
+        <button class="btn btn-accent btn-full"
+          style="margin-top:1.25rem"
+          onclick="doLogin()">
+          Sign In
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= JS ================= -->
+  <script type="module">
+    import { auth } from "../js/firebase-config.js";
+    import {
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+
+    // Redirect if already logged in
+    onAuthStateChanged(auth, (user) => {
+      if (user) window.location.href = 'analyze.html';
+    });
+
+    // LOGIN
+    window.doLogin = async function () {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        alert("Enter email and password");
+        return;
+      }
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        alert("Login Failed: " + error.message);
+      }
+    };
+
+    // FORGOT PASSWORD
+    window.doForgotPassword = async function (e) {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+
+      if (!email) {
+        alert("Enter your email first");
+        return;
+      }
+
+      try {
+        await sendPasswordResetEmail(auth, email);
+        alert("Password reset email sent");
+      } catch (error) {
+        alert(error.message);
+      }
+    };
+
+    // PASSWORD TOGGLE
+    window.togglePw = (id, btn) => {
+      const inp = document.getElementById(id);
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    };
+  </script>
+
+</body>
+</html>

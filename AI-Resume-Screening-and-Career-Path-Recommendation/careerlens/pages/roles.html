@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Role Matches — CareerLens</title>
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <link rel="stylesheet" href="../css/pages.css"/>
+</head>
+<body>
+  <div id="navbarPlaceholder"></div>
+  <div class="page-container page-fade" id="pageContent">
+    <div class="empty-gate" id="emptyGate" style="display:none">
+      <div class="empty-icon-lg">◈</div>
+      <h2>No analysis yet</h2>
+      <p>Analyze your resume first to see matched career roles.</p>
+      <a class="btn btn-accent" href="analyze.html">Go to Analyze</a>
+    </div>
+    
+    <div id="mainContent"></div>
+  </div>
+
+  <script src="../js/shared.js"></script>
+  
+  <script type="module">
+    import { auth } from "../js/firebase-config.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+
+    const RING_COLORS = ['#c8502a','#1d4ed8','#2d6a4f'];
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+      } else {
+        initNavbar('roles', user);
+        const d = AnalysisStore.get();
+        if (!d || !d.role_matches) { 
+          document.getElementById('emptyGate').style.display = 'flex'; 
+        } else {
+          render(d);
+        }
+      }
+    });
+
+    // ... (Replace your render and roleCard functions with these)
+
+    function render(d) {
+      const topRole = d.role_matches[0];
+      const allMissing = topRole ? topRole.missing_skills : [];
+
+      document.getElementById('mainContent').innerHTML = `
+        <div class="page-header">
+          <div class="page-eyebrow">Step 03 — Career Role Matches</div>
+          <h1 class="page-title">Your matched roles</h1>
+          <p class="page-sub">Click any role to generate your personalized learning roadmap.</p>
+        </div>
+
+        <div class="card" style="margin-bottom:1.5rem">
+          <div class="card-section-title">ALL MISSING SKILLS (FOR TOP MATCH)</div>
+          <div class="badges-wrap">
+            ${allMissing.length > 0 
+              ? allMissing.map(s => `<span class="badge badge-red">${s}</span>`).join('') 
+              : '<span class="badge badge-green">✓ Perfect Match! No missing skills.</span>'}
+          </div>
+        </div>
+
+        <div class="roles-list">
+          ${d.role_matches.map((role, i) => roleCard(role, i)).join('')}
+        </div>
+
+        <div class="page-nav-row">
+          <a class="btn btn-outline" href="skills.html">← Back to Skills</a>
+          <button class="btn btn-accent" onclick="goToRoadmap()">View Roadmap →</button>
+        </div>
+      `;
+    }
+
+    function roleCard(role, i) {
+      const color = RING_COLORS[i % RING_COLORS.length];
+      const selected = AnalysisStore.getSelectedRole();
+      const isSelected = selected && selected.title === role.title;
+      
+      return `
+        <div class="role-card-full ${isSelected ? 'role-selected' : ''}" id="rc-${i}" onclick="selectRole(${i})">
+          <div class="role-card-left">
+            <div class="role-rank">#${i+1}</div>
+            <div class="role-card-body">
+              <div class="role-card-title">${role.title}</div>
+              <div class="role-skill-sections">
+                <div>
+                  <div class="role-skill-label">REQUIRED SKILLS</div>
+                  <div class="badges-wrap">
+                    ${(role.required_skills || []).map(s => `<span class="badge badge-green">${s}</span>`).join('')}
+                  </div>
+                </div>
+                <div>
+                  <div class="role-skill-label">MISSING SKILLS</div>
+                  <div class="badges-wrap">
+                    ${(role.missing_skills || []).length > 0 
+                      ? role.missing_skills.map(s => `<span class="badge badge-red">${s}</span>`).join('') 
+                      : '<span class="badge badge-green">None</span>'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="role-card-right">
+            <!-- Animated Score Ring Fixed -->
+            ${scoreRingHTML(role.match_score, 80, 6, color, 'match')}
+            <div class="role-select-btn" id="rsb-${i}">
+              ${isSelected ? '✓ Selected' : 'Select Role'}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    window.selectRole = function(i) {
+      const d = AnalysisStore.get();
+      const role = d.role_matches[i];
+      AnalysisStore.setSelectedRole(role);
+
+      document.querySelectorAll('.role-card-full').forEach((el, idx) => {
+        el.classList.toggle('role-selected', idx === i);
+        const rsb = document.getElementById('rsb-' + idx);
+        if (rsb) rsb.textContent = idx === i ? '✓ Selected' : 'Select Role';
+      });
+      showToast('Role selected: ' + role.title, 'success');
+    };
+
+    window.goToRoadmap = function() {
+        const sel = AnalysisStore.getSelectedRole();
+        if(!sel) return showToast("Please select a role first", "error");
+        window.location.href = 'roadmap.html';
+    }
+  </script>
+</body>
+</html>

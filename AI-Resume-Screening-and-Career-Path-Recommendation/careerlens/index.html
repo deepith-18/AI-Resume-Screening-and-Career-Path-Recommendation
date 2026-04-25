@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerLens</title>
+
+  <link rel="stylesheet" href="css/shared.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<style>
+  .auth-btn-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.auth-btn-row .btn {
+  flex: 1;              /* equal width */
+  text-align: center;
+}
+</style>
+<body class="auth-page">
+
+  <div class="auth-wrap">
+
+    <!-- LEFT -->
+    <div class="auth-left">
+      <a class="auth-logo" href="#">
+        <div class="nav-brand-dot"></div>CareerLens
+      </a>
+
+      <div class="auth-left-body">
+        <h1 class="auth-left-title">
+          Analyze your<br><em>career path.</em>
+        </h1>
+
+        <p class="auth-left-sub">
+          Get AI-powered insights on your resume, discover skill gaps,
+          and follow a personalized roadmap to land your dream job.
+        </p>
+
+        <div class="benefit-list">
+          <div class="benefit-item">
+            <div class="benefit-check">✓</div>
+            <span>AI-powered skill extraction</span>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-check">✓</div>
+            <span>3 matched career roles</span>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-check">✓</div>
+            <span>Personalized roadmap</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="auth-right">
+      <div class="auth-form-wrap page-fade">
+
+        <div class="auth-form-header">
+          <h2 class="auth-form-title">Welcome to CareerLens</h2>
+          <p class="auth-form-sub">Start building your career journey</p>
+        </div>
+
+        <button class="btn btn-accent btn-full"
+          onclick="location.href='pages/analyze.html'">
+          Start Resume Analysis
+        </button>
+
+        <div class="auth-divider"><span>or continue with</span></div>
+
+<div class="auth-btn-row">
+  <button class="btn btn-accent"
+    onclick="location.href='pages/login.html'">
+    Login
+  </button>
+
+  <button class="btn btn-accent"
+    onclick="location.href='pages/register.html'">
+    Create Account
+  </button>
+</div>
+
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html> 
